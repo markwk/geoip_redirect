@@ -1,11 +1,11 @@
 <?php
 /**
- * Implementation of hook_boot().
+ * Implements hook_boot().
  */
 function geoip_redirect_boot() {
   //verify that a URL has been set
-  require_once './includes/common.inc';
-  require_once './includes/path.inc';
+  require_once DRUPAL_ROOT . '/' . './includes/common.inc';
+  require_once DRUPAL_ROOT . '/' . './includes/path.inc';
   drupal_load('module', 'geoip');
   drupal_bootstrap(DRUPAL_BOOTSTRAP_PATH);
   drupal_load('module', 'filter');
@@ -16,39 +16,40 @@ function geoip_redirect_boot() {
       /*
        * if user is annonymous and they match our country to test for,
        * bounce them to a new URL. This is critical because otherwise a
-       * cached site will cache which ever country hits the site first. 
-       * This effectively creates a cached version of the site 
+       * cached site will cache which ever country hits the site first.
+       * This effectively creates a cached version of the site
        * per country code
-      */
+       */
 
       //This code will run the first time they hit a page to set the geo variable
       if ($user->uid == 0 && variable_get('geoip_redirect_country', '') == geoip_country_code() && $_GET['geo'] == '') {
         $ary = $_GET;
         $ary['geo'] = geoip_country_code();
         unset($ary['q']);
-        drupal_goto(drupal_get_path_alias($_GET['q']), $ary);
+        // TODO $ary needs to be an array of keys and values instead of a string.
+        drupal_goto(drupal_get_path_alias($_GET['q']), array('query' => $ary));
       }
       //if we've redirected, and they are anon and its the country we're looking for
       elseif ($user->uid == 0 && variable_get('geoip_redirect_country', '') == geoip_country_code() && $_GET['geo'] == geoip_country_code()) {
         //write variable as to where to redirect
-        drupal_add_js(array('geoip_redirect' => array('url' => variable_get('geoip_redirect_url', ''), 'country_code' => variable_get('geoip_redirect_country', ''))), 'setting');
+        drupal_add_js(array('geoip_redirect' => array('url' => variable_get('geoip_redirect_url', ''), 'country_code' => variable_get('geoip_redirect_country', ''))), array('type' => 'setting', 'scope' => JS_DEFAULT));
         //cookie code to store if they want to stay on the site
         drupal_add_js(drupal_get_path('module', 'geoip_redirect') . '/jquery.cookie.js');
         //redirect code to push them to the new URL if they said they want to go there
-        drupal_add_js(drupal_get_path('module', 'geoip_redirect') . '/redirect.js', 'module');
+        drupal_add_js(drupal_get_path('module', 'geoip_redirect') . '/redirect.js');
         //fix for the popups and modalframe projects
-        drupal_add_js(drupal_get_path('module', 'geoip_redirect') . '/popupfix.js', 'module');
-        drupal_add_css(drupal_get_path('module', 'geoip_redirect') . '/redirect.css', 'module');
+        drupal_add_js(drupal_get_path('module', 'geoip_redirect') . '/popupfix.js');
+        drupal_add_css(drupal_get_path('module', 'geoip_redirect') . '/redirect.css');
       }
     }
   }
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function geoip_redirect_menu() {
-  $items['admin/settings/geoip/redirect'] = array(
+  $items['admin/config/geoip/redirect'] = array(
     'title' => 'Redirect',
     'description' => 'Setup a global redirect based on the country of origin',
     'page callback' => 'drupal_get_form',
@@ -60,9 +61,9 @@ function geoip_redirect_menu() {
 }
 
 /**
- * Implementation of hook_admin_settings().
+ * Implements hook_admin_settings().
  */
-function geoip_redirect_admin_settings() {
+function geoip_redirect_admin_settings($form, &$form_state) {
   $form['geoip_redirect_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Redirect URL'),
