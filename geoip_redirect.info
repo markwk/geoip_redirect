@@ -1,4 +1,3 @@
-; $Id: geoip_redirect.info,v 1.0
 name = GeoIP Redirect
 description = Redirect the user to a new site based on IP address
 core = 6.x
